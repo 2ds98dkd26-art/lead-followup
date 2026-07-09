@@ -34,9 +34,10 @@ client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 class LeadBericht(BaseModel):
     bericht: str  # de volledige, vrije tekst die de lead geschreven heeft
+    calendly_link: str = ""  # de persoonlijke Calendly-link van de makelaar
 
 
-def genereer_email(bericht: str) -> str:
+def genereer_email(bericht: str, calendly_link: str) -> str:
     prompt = f"""Je bent een sales-assistent voor een makelaarskantoor.
 Je krijgt hieronder een bericht van een potentiele klant (lead), in vrije tekst,
 precies zoals diegene het zelf geschreven heeft (bv. via een contactformulier of mail).
@@ -50,8 +51,8 @@ Eisen:
 - Haal zelf uit de tekst wat relevant is (naam indien genoemd, wat ze willen,
   context) en verwerk dat in je antwoord
 - Vriendelijk en niet opdringerig
-- Eindig met een lichte call-to-action (bv. kort telefoongesprek voorstellen
-  of vragen naar meer details zoals budget/locatie)
+- Eindig met een uitnodiging om zelf een moment te kiezen via deze link: {calendly_link}
+- Noem zelf GEEN concrete data of tijden, verwijs alleen naar de link
 - Geen overdreven salesjargon
 - Schrijf in het Nederlands
 - Geef ALLEEN de e-mailtekst terug, geen onderwerp, geen uitleg erbij
@@ -68,7 +69,7 @@ def new_lead(lead: LeadBericht):
     if not os.environ.get("GEMINI_API_KEY"):
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY ontbreekt")
 
-    email_tekst = genereer_email(lead.bericht)
+    email_tekst = genereer_email(lead.bericht, lead.calendly_link)
 
     return {
         "ontvangen_bericht": lead.bericht,
